@@ -1,29 +1,42 @@
 [
   {
+    "id": 0,
+    "name": "Patrick",
+    "username": "patrick",
+    "password": "adminpass",
+    "role": "admin",
+    "logoutTime": 0,
+    "email": "patrick@schahlled.de",
+    "phone": "0123-456780",
+    "department": "Admin",
+    "defaultStorage": "Admin-Lager",
+    "type": "user"
+  },
+  {
     "id": 1,
     "name": "Max Mustermann",
+    "username": "max",
+    "password": "pass123",
+    "role": "normal",
+    "logoutTime": 30,
     "email": "max@schahlled.de",
     "phone": "0123-456789",
     "department": "Technik",
     "defaultStorage": "Aug-04-02",
     "type": "user"
   },
+  // ... (weitere Benutzer)
   {
-    "id": 2,
-    "name": "Anna Schmidt",
-    "email": "anna@schahlled.de",
-    "phone": "0123-456788",
-    "department": "Vertrieb",
-    "defaultStorage": "Aug-04-03",
-    "type": "user"
-  },
-  {
-    "id": 3,
-    "name": "Peter Glasl",
-    "email": "peter@schahlled.de",
-    "phone": "0123-456787",
-    "department": "Außendienst",
-    "defaultStorage": "Peter-Lager-01",
+    "id": 4,
+    "name": "Lager Mitarbeiter",
+    "username": "lager",
+    "password": "lagerpass",
+    "role": "lager",
+    "logoutTime": 0,
+    "email": "lager@schahlled.de",
+    "phone": "0123-456781",
+    "department": "Lager",
+    "defaultStorage": "Lager-Haupt",
     "type": "user"
   }
 ]
