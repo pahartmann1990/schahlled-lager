@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SchahlLED - Intelligent Lighting Management</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <div class="header">
+            <div class="logo-container">
+                <div class="logo"></div>
+                <div>
+                    <div class="logo-text">SchahlLED</div>
+                    <div class="logo-subtext">Intelligent Lighting</div>
+                </div>
+                <select id="headerUserSelect" class="user-select" onchange="changeLoggedInUser(this.value)">
+                    <option value="">-- Benutzer wählen --</option>
+                </select>
+            </div>
+            <div class="header-actions">
+                <button class="btn-home" onclick="showPage('dashboard')">🏠 Dashboard</button>
+                <button class="menu-toggle" onclick="toggleMenu()">☰</button>
+            </div>
+        </div>
+
+        <!-- Navigation Menu -->
+        <div class="nav-overlay" onclick="toggleMenu()"></div>
+        <div class="nav-menu">
+            <div class="nav-section">
+                <h3>📋 Verwaltung</h3>
+                <button class="nav-btn" onclick="showPage('userManagement')">👥 Benutzer verwalten</button>
+                <button class="nav-btn" onclick="showPage('customerManagement')">🏢 Kunden verwalten</button>
+                <button class="nav-btn" onclick="showPage('productManagement')">📦 Produkte verwalten</button>
+                <button class="nav-btn" onclick="showPage('storageManagement')">📍 Lagerplätze verwalten</button>
+            </div>
+            
+            <div class="nav-section">
+                <h3>📊 Listen & Export</h3>
+                <button class="nav-btn" onclick="printCurrentList()">🖨️ Aktuelle Liste drucken</button>
+                <button class="nav-btn" onclick="showExportModal()">💾 Daten exportieren</button>
+                <button class="nav-btn" onclick="showImportModal()">📂 Daten importieren</button>
+            </div>
+            
+            <div class="nav-section">
+                <h3>⚙️ Einstellungen</h3>
+                <button class="nav-btn" onclick="showSettingsModal()">🔧 System-Einstellungen</button>
+                <button class="nav-btn" onclick="clearAllData()">🔄 Alle Daten zurücksetzen</button>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Dashboard Page -->
+            <div id="dashboard" class="page active">
+                <!-- Alerts Section -->
+                <div class="alerts-section" id="alertsSection">
+                    <h3 style="margin-bottom: 15px; color: var(--dark-blue);">⚠️ Wichtige Hinweise</h3>
+                    <div id="alertsContainer"></div>
+                </div>
+
+                <!-- Dashboard Grid -->
+                <div class="dashboard-grid">
+                    <div class="dashboard-card lend" onclick="showPage('lendingFlow')">
+                        <div class="dashboard-icon">📤</div>
+                        <div class="dashboard-title">Ausleihen</div>
+                        <div class="dashboard-desc">Neues Produkt ausleihen</div>
+                    </div>
+
+                    <div class="dashboard-card return" onclick="showPage('returnFlow')">
+                        <div class="dashboard-icon">📥</div>
+                        <div class="dashboard-title">Rückgabe</div>
+                        <div class="dashboard-desc">Produkt zurückgeben</div>
+                    </div>
+
+                    <div class="dashboard-card inventory" onclick="showPage('inventoryList')">
+                        <div class="dashboard-icon">📋</div>
+                        <div class="dashboard-title">Inventar</div>
+                        <div class="dashboard-desc">Alle Ausleihen anzeigen</div>
+                    </div>
+
+                    <div class="dashboard-card consumption" onclick="showPage('consumptionMaterials')">
+                        <div class="dashboard-icon">🔧</div>
+                        <div class="dashboard-title">Verbrauchsmaterial</div>
+                        <div class="dashboard-desc">Ersatzteile verwalten</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Lending Flow -->
+            <div id="lendingFlow" class="page">
+                <!-- Step 1: User/Customer Selection -->
+                <div id="lendingStep1" class="step active">
+                    <div class="form-container">
+                        <div class="form-header">
+                            <h2>👥 Benutzer/Kunde auswählen</h2>
+                            <p>Wählen Sie einen bestehenden Benutzer oder Kunden aus</p>
+                        </div>
+                        
+                        <div class="selection-grid" id="userSelectionGrid">
+                            <!-- Users will be populated here -->
+                        </div>
+                        
+                        <div class="form-group">
+                            <button class="btn btn-primary" onclick="showAddUserModal()">👤 Neuen Benutzer hinzufügen</button>
+                            <button class="btn btn-warning" onclick="showAddCustomerModal()">🏢 Neuen Kunden hinzufügen</button>
+                        </div>
+                        
+                        <button class="btn btn-success" id="continueToStep2" onclick="continueToStep2()" disabled>Weiter →</button>
+                    </div>
+                </div>
+
+                <!-- Step 2: Product Selection -->
+                <div id="lendingStep2" class="step">
+                    <div class="form-container">
+                        <div class="form-header">
+                            <h2>📦 Produkte scannen/auswählen</h2>
+                            <p>Scannen Sie Barcodes (kommagetrennt) oder wählen Sie Produkte aus</p>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="productBarcode">Barcodes scannen:</label>
+                            <input type="text" id="productBarcode" class="form-control barcode-input" placeholder="Barcodes hier scannen (kommagetrennt)..." autofocus>
+                        </div>
+                        
+                        <div id="productInfo" style="margin-bottom: 20px;"></div>
+                        
+                        <div id="productSuggestions" style="margin-bottom: 20px;">
+                            <h4>Verfügbare Produkte:</h4>
+                            <div class="product-grid" id="availableProductsGrid">
+                                <!-- Available products will be shown here -->
+                            </div>
+                        </div>
+                        
+                        <button class="btn btn-primary" onclick="backToStep1()">← Zurück</button>
+                        <button class="btn btn-success" id="continueToStep3" onclick="continueToStep3()" disabled>Weiter →</button>
+                    </div>
+                </div>
+
+                <!-- Step 3: Details & Confirmation -->
+                <div id="lendingStep3" class="step">
+                    <div class="form-container">
+                        <div class="form-header">
+                            <h2>📝 Ausleihe-Details</h2>
+                            <p>Vervollständigen Sie die Ausleihe-Informationen</p>
+                        </div>
+                        
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="returnDate">Rückgabedatum:</label>
+                                <input type="datetime-local" id="returnDate" class="form-control">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="storageLocation">Lagerplatz:</label>
+                                <select id="storageLocation" class="form-control">
+                                    <option value="">-- Lagerplatz wählen --</option>
+                                </select>
+                                <div style="margin-top: 10px;">
+                                    <input type="text" id="customStorageLocation" class="form-control" placeholder="Neuen Lagerplatz eingeben (z.B. Aug-04-07)" style="margin-bottom: 10px;">
+                                    <button type="button" class="btn btn-warning" onclick="addCustomStorageLocation()">+ Lagerplatz hinzufügen</button>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="additionalCustomer">Kunde (optional):</label>
+                                <select id="additionalCustomer" class="form-control">
+                                    <option value="">-- Kunde auswählen (optional) --</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="lendingComment">Kommentar/Zusatzinfo:</label>
+                            <textarea id="lendingComment" class="form-control" rows="3" placeholder="Zusätzliche Informationen..."></textarea>
+                        </div>
+                        
+                        <div id="selectedProductsList"></div>
+                        
+                        <button class="btn btn-primary" onclick="backToStep2()">← Zurück</button>
+                        <button class="btn btn-success" onclick="completeLending()">✅ Ausleihe abschließen</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Return Flow -->
+            <div id="returnFlow" class="page">
+                <div class="form-container">
+                    <div class="form-header">
+                        <h2>📥 Rückgabe</h2>
+                        <p>Scannen Sie den Barcode oder suchen Sie das Produkt</p>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="returnBarcode">Barcode scannen:</label>
+                        <input type="text" id="returnBarcode" class="form-control barcode-input" placeholder="Barcode hier scannen..." autofocus>
+                    </div>
+                    
+                    <div class="search-filter">
+                        <input type="text" id="returnSearch" class="search-input" placeholder="Nach Name, Produkt oder Lagerplatz suchen...">
+                        <select id="returnFilter" class="filter-select">
+                            <option value="">Alle anzeigen</option>
+                            <option value="overdue">Überfällig</option>
+                            <option value="today">Heute fällig</option>
+                            <option value="week">Diese Woche fällig</option>
+                        </select>
+                    </div>
+                    
+                    <div id="returnList" class="list-container">
+                        <!-- Return list will be populated here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Inventory List -->
+            <div id="inventoryList" class="page">
+                <div class="list-container">
+                    <div class="list-header">
+                        <h2>📋 Inventar - Alle Ausleihen</h2>
+                        <div class="search-filter">
+                            <input type="text" id="inventorySearch" class="search-input" placeholder="Suchen...">
+                            <select id="inventoryFilter" class="filter-select">
+                                <option value="">Alle</option>
+                                <option value="active">Aktive Ausleihen</option>
+                                <option value="overdue">Überfällig</option>
+                                <option value="returned">Zurückgegeben</option>
+                            </select>
+                            <button class="btn btn-primary" onclick="printCurrentList()">🖨️ Drucken</button>
+                        </div>
+                    </div>
+                    
+                    <div id="inventoryTable"></div>
+                </div>
+            </div>
+
+            <!-- Consumption Materials -->
+            <div id="consumptionMaterials" class="page">
+                <!-- Step 1: Customer Selection -->
+                <div id="consumptionStep1" class="step active">
+                    <div class="form-container">
+                        <div class="form-header">
+                            <h2>🏢 Kunde für Verbrauchsmaterial auswählen</h2>
+                            <p>Wählen Sie den Kunden aus, für den Ersatzteile benötigt werden</p>
+                        </div>
+                        
+                        <div class="search-filter">
+                            <input type="text" id="customerSearchInput" class="search-input" placeholder="Nach Kunde oder Kundennummer suchen...">
+                            <input type="text" id="projectSearchInput" class="search-input" placeholder="Nach Projekt/Kommi suchen...">
+                        </div>
+                        
+                        <div class="selection-grid" id="customerSelectionGrid">
+                            <!-- Customers will be populated here -->
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="employeeSelect">Mitarbeiter auswählen:</label>
+                            <select id="employeeSelect" class="form-control">
+                                <option value="">-- Mitarbeiter wählen --</option>
+                            </select>
+                        </div>
+                        
+                        <button class="btn btn-primary" onclick="showAddCustomerModal()">🏢 Neuen Kunden hinzufügen</button>
+                        <button class="btn btn-success" id="continueToConsumptionStep2" onclick="continueToConsumptionStep2()" disabled>Weiter →</button>
+                    </div>
+                </div>
+
+                <!-- Step 2: Product Count & Details -->
+                <div id="consumptionStep2" class="step">
+                    <div class="form-container">
+                        <div class="form-header">
+                            <h2>📦 Anzahl verschiedene Produkte</h2>
+                            <p>Wie viele verschiedene Artikel werden benötigt?</p>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="productCount">Anzahl verschiedene Produkte:</label>
+                            <input type="number" id="productCount" class="form-control" min="1" max="20" value="1" onchange="updateProductInputs()">
+                        </div>
+                        
+                        <div id="productInputsContainer">
+                            <!-- Product inputs will be generated here -->
+                        </div>
+                        
+                        <button class="btn btn-primary" onclick="backToConsumptionStep1()">← Zurück</button>
+                        <button class="btn btn-success" onclick="continueToConsumptionStep3()">Weiter →</button>
+                    </div>
+                </div>
+
+                <!-- Step 3: Tester Numbers -->
+                <div id="consumptionStep3" class="step">
+                    <div class="form-container">
+                        <div class="form-header">
+                            <h2>🔧 Testernummern zuweisen</h2>
+                            <p>Tragen Sie die Testernummern für jeden Artikel ein</p>
+                        </div>
+                        
+                        <div id="testerNumbersContainer">
+                            <!-- Tester number inputs will be generated here -->
+                        </div>
+                        
+                        <div class="form-group">
+                            <button class="btn btn-warning" onclick="copyTesterNumbers()">📋 Testernummer auf alle übertragen</button>
+                            <button class="btn btn-warning" onclick="bulkAssignTester()">📝 Alle auf einmal eintragen</button>
+                        </div>
+                        
+                        <button class="btn btn-primary" onclick="backToConsumptionStep2()">← Zurück</button>
+                        <button class="btn btn-success" onclick="saveConsumptionMaterials()">✅ Alle Artikel speichern</button>
+                    </div>
+                </div>
+                
+                <!-- Consumption List with Filters -->
+                <div class="list-container" style="margin-top: 30px;" id="consumptionListContainer">
+                    <div class="list-header">
+                        <h3>📋 Verbrauchsmaterial-Liste</h3>
+                        <div class="search-filter">
+                            <select id="monthFilter" class="filter-select">
+                                <option value="">Alle Monate</option>
+                            </select>
+                            <select id="employeeFilter" class="filter-select">
+                                <option value="">Alle Mitarbeiter</option>
+                            </select>
+                            <select id="customerFilter" class="filter-select">
+                                <option value="">Alle Kunden</option>
+                            </select>
+                            <input type="text" id="consumptionSearch" class="search-input" placeholder="Suchen...">
+                            <button class="btn btn-primary" onclick="printConsumptionList()">🖨️ Drucken</button>
+                            <button class="btn btn-warning" onclick="exportConsumptionList()">📊 Excel Export</button>
+                        </div>
+                    </div>
+                    
+                    <div id="consumptionTable"></div>
+                </div>
+            </div>
+
+            <!-- User Management -->
+            <div id="userManagement" class="page">
+                <div class="list-container">
+                    <div class="list-header">
+                        <h2>👥 Benutzer-Verwaltung</h2>
+                        <button class="btn btn-primary" onclick="showAddUserModal()">➕ Neuen Benutzer hinzufügen</button>
+                    </div>
+                    <div id="userManagementTable"></div>
+                </div>
+            </div>
+
+            <!-- Customer Management -->
+            <div id="customerManagement" class="page">
+                <div class="list-container">
+                    <div class="list-header">
+                        <h2>🏢 Kunden-Verwaltung</h2>
+                        <button class="btn btn-primary" onclick="showAddCustomerModal()">➕ Neuen Kunden hinzufügen</button>
+                    </div>
+                    <div id="customerManagementTable"></div>
+                </div>
+            </div>
+
+            <!-- Product Management -->
+            <div id="productManagement" class="page">
+                <div class="list-container">
+                    <div class="list-header">
+                        <h2>📦 Produkt-Verwaltung</h2>
+                        <button class="btn btn-primary" onclick="showAddProductModal()">➕ Neues Produkt hinzufügen</button>
+                    </div>
+                    <div id="productManagementTable"></div>
+                </div>
+            </div>
+
+            <!-- Storage Management -->
+            <div id="storageManagement" class="page">
+                <div class="list-container">
+                    <div class="list-header">
+                        <h2>📍 Lagerplatz-Verwaltung</h2>
+                        <button class="btn btn-primary" onclick="showAddStorageModal()">➕ Neuen Lagerplatz hinzufügen</button>
+                        <button class="btn btn-primary" onclick="showBatchStorageModal()">📚 Batch-Lagerplätze hinzufügen</button>
+                    </div>
+                    <div id="storageManagementTable"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <!-- Add User Modal -->
+    <div id="addUserModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>👤 Neuen Benutzer hinzufügen</h3>
+                <span class="close" onclick="closeModal('addUserModal')">×</span>
+            </div>
+            <div class="form-group">
+                <label for="newUserName">Name:</label>
+                <input type="text" id="newUserName" class="form-control" placeholder="Vollständiger Name">
+            </div>
+            <div class="form-group">
+                <label for="newUserEmail">E-Mail:</label>
+                <input type="email" id="newUserEmail" class="form-control" placeholder="E-Mail-Adresse">
+            </div>
+            <div class="form-group">
+                <label for="newUserPhone">Telefon:</label>
+                <input type="tel" id="newUserPhone" class="form-control" placeholder="Telefonnummer">
+            </div>
+            <div class="form-group">
+                <label for="newUserDepartment">Abteilung:</label>
+                <input type="text" id="newUserDepartment" class="form-control" placeholder="Abteilung/Bereich">
+            </div>
+            <div class="form-group">
+                <label for="newUserDefaultStorage">Standard-Lagerplatz:</label>
+                <select id="newUserDefaultStorage" class="form-control">
+                    <option value="">-- Standard-Lagerplatz wählen --</option>
+                </select>
+                <input type="text" id="newUserCustomStorage" class="form-control" placeholder="Oder neuen Lagerplatz eingeben" style="margin-top: 10px;">
+            </div>
+            <button class="btn btn-success" onclick="addUser()">✅ Benutzer hinzufügen</button>
+        </div>
+    </div>
+
+    <!-- Edit User Modal -->
+    <div id="editUserModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>👤 Benutzer bearbeiten</h3>
+                <span class="close" onclick="closeModal('editUserModal')">×</span>
+            </div>
+            <div class="form-group">
+                <label for="editUserName">Name:</label>
+                <input type="text" id="editUserName" class="form-control" placeholder="Vollständiger Name">
+            </div>
+            <div class="form-group">
+                <label for="editUserEmail">E-Mail:</label>
+                <input type="email" id="editUserEmail" class="form-control" placeholder="E-Mail-Adresse">
+            </div>
+            <div class="form-group">
+                <label for="editUserPhone">Telefon:</label>
+                <input type="tel" id="editUserPhone" class="form-control" placeholder="Telefonnummer">
+            </div>
+            <div class="form-group">
+                <label for="editUserDepartment">Abteilung:</label>
+                <input type="text" id="editUserDepartment" class="form-control" placeholder="Abteilung/Bereich">
+            </div>
+            <div class="form-group">
+                <label for="editUserDefaultStorage">Standard-Lagerplatz:</label>
+                <select id="editUserDefaultStorage" class="form-control">
+                    <option value="">-- Standard-Lagerplatz wählen --</option>
+                </select>
+                <input type="text" id="editUserCustomStorage" class="form-control" placeholder="Oder neuen Lagerplatz eingeben" style="margin-top: 10px;">
+            </div>
+            <input type="hidden" id="editUserId">
+            <button class="btn btn-success" onclick="saveEditedUser()">✅ Änderungen speichern</button>
+        </div>
+    </div>
+
+    <!-- Add Customer Modal -->
+    <div id="addCustomerModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>🏢 Neuen Kunden hinzufügen</h3>
+                <span class="close" onclick="closeModal('addCustomerModal')">×</span>
+            </div>
+            <div class="form-group">
+                <label for="newCustomerName">Firmenname:</label>
+                <input type="text" id="newCustomerName" class="form-control" placeholder="Firmenname">
+            </div>
+            <div class="form-group">
+                <label for="newCustomerNumber">Kundennummer:</label>
+                <input type="text" id="newCustomerNumber" class="form-control" placeholder="Kundennummer">
+            </div>
+            <div class="form-group">
+                <label for="newCustomerContact">Ansprechpartner:</label>
+                <input type="text" id="newCustomerContact" class="form-control" placeholder="Kontaktperson">
+            </div>
+            <div class="form-group">
+                <label for="newCustomerEmail">E-Mail:</label>
+                <input type="email" id="newCustomerEmail" class="form-control" placeholder="E-Mail-Adresse">
+            </div>
+            <div class="form-group">
+                <label for="newCustomerPhone">Telefon:</label>
+                <input type="tel" id="newCustomerPhone" class="form-control" placeholder="Telefonnummer">
+            </div>
+            <div class="form-group">
+                <label for="newCustomerDefaultStorage">Standard-Lagerplatz:</label>
+                <select id="newCustomerDefaultStorage" class="form-control">
+                    <option value="">-- Standard-Lagerplatz wählen --</option>
+                </select>
+                <input type="text" id="newCustomerCustomStorage" class="form-control" placeholder="Oder neuen Lagerplatz eingeben" style="margin-top: 10px;">
+            </div>
+            <button class="btn btn-success" onclick="addCustomer()">✅ Kunden hinzufügen</button>
+        </div>
+    </div>
+
+    <!-- Edit Customer Modal -->
+    <div id="editCustomerModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>🏢 Kunden bearbeiten</h3>
+                <span class="close" onclick="closeModal('editCustomerModal')">×</span>
+            </div>
+            <div class="form-group">
+                <label for="editCustomerName">Firmenname:</label>
+                <input type="text" id="editCustomerName" class="form-control" placeholder="Firmenname">
+            </div>
+            <div class="form-group">
+                <label for="editCustomerNumber">Kundennummer:</label>
+                <input type="text" id="editCustomerNumber" class="form-control" placeholder="Kundennummer">
+            </div>
+            <div class="form-group">
+                <label for="editCustomerContact">Ansprechpartner:</label>
+                <input type="text" id="editCustomerContact" class="form-control" placeholder="Kontaktperson">
+            </div>
+            <div class="form-group">
+                <label for="editCustomerEmail">E-Mail:</label>
+                <input type="email" id="editCustomerEmail" class="form-control" placeholder="E-Mail-Adresse">
+            </div>
+            <div class="form-group">
+                <label for="editCustomerPhone">Telefon:</label>
+                <input type="tel" id="editCustomerPhone" class="form-control" placeholder="Telefonnummer">
+            </div>
+            <div class="form-group">
+                <label for="editCustomerDefaultStorage">Standard-Lagerplatz:</label>
+                <select id="editCustomerDefaultStorage" class="form-control">
+                    <option value="">-- Standard-Lagerplatz wählen --</option>
+                </select>
+                <input type="text" id="editCustomerCustomStorage" class="form-control" placeholder="Oder neuen Lagerplatz eingeben" style="margin-top: 10px;">
+            </div>
+            <input type="hidden" id="editCustomerId">
+            <button class="btn btn-success" onclick="saveEditedCustomer()">✅ Änderungen speichern</button>
+        </div>
+    </div>
+
+    <!-- Add Product Modal -->
+    <div id="addProductModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>📦 Neues Produkt hinzufügen</h3>
+                <span class="close" onclick="closeModal('addProductModal')">×</span>
+            </div>
+            <div class="form-group">
+                <label for="newProductBarcode">Barcode:</label>
+                <input type="text" id="newProductBarcode" class="form-control" placeholder="Barcode">
+            </div>
+            <div class="form-group">
+                <label for="newProductName">Produktname:</label>
+                <input type="text" id="newProductName" class="form-control" placeholder="Name des Produkts">
+            </div>
+            <div class="form-group">
+                <label for="newProductStorageLocation">Lagerplatz:</label>
+                <select id="newProductStorageLocation" class="form-control">
+                    <option value="">-- Lagerplatz wählen --</option>
+                </select>
+                <input type="text" id="newProductCustomStorage" class="form-control" placeholder="Oder neuen Lagerplatz eingeben" style="margin-top: 10px;">
+            </div>
+            <div class="form-group">
+                <label for="newProductDescription">Beschreibung:</label>
+                <textarea id="newProductDescription" class="form-control" rows="3" placeholder="Produktbeschreibung..."></textarea>
+            </div>
+            <button class="btn btn-success" onclick="addProduct()">✅ Produkt hinzufügen</button>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settingsModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>⚙️ System-Einstellungen</h3>
+                <span class="close" onclick="closeModal('settingsModal')">×</span>
+            </div>
+            <div class="form-group">
+                <label for="autoReturnTime">Automatische Rückkehr zum Dashboard (Sekunden, 0 = Dauerhaft):</label>
+                <input type="number" id="autoReturnTime" class="form-control" min="0" placeholder="0 = dauerhaft">
+            </div>
+            <div class="form-group">
+                <label>
+                    <input type="checkbox" id="requireTesterNumber"> Testernummer für Verbrauchsmaterial zwingend erforderlich
+                </label>
+            </div>
+            <div class="form-group">
+                <label>
+                    <input type="checkbox" id="autoPrint"> Automatisches Drucken
+                </label>
+            </div>
+            <div class="form-group">
+                <label for="printerType">Druckertyp:</label>
+                <select id="printerType" class="form-control">
+                    <option value="normal">Normaldrucker</option>
+                    <option value="receipt">Kassenzetteldrucker</option>
+                </select>
+            </div>
+            <button class="btn btn-success" onclick="saveSettings()">💾 Einstellungen speichern</button>
+        </div>
+    </div>
+
+    <!-- Export Modal -->
+    <div id="exportModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>💾 Daten exportieren</h3>
+                <span class="close" onclick="closeModal('exportModal')">×</span>
+            </div>
+            <div class="form-group">
+                <label for="exportDateFrom">Von Datum:</label>
+                <input type="date" id="exportDateFrom" class="form-control">
+            </div>
+            <div class="form-group">
+                <label for="exportDateTo">Bis Datum:</label>
+                <input type="date" id="exportDateTo" class="form-control">
+            </div>
+            <div class="form-group">
+                <label>Daten zum Export auswählen:</label>
+                <div>
+                    <label><input type="checkbox" id="exportUsers"> Benutzer</label><br>
+                    <label><input type="checkbox" id="exportCustomers"> Kunden</label><br>
+                    <label><input type="checkbox" id="exportProducts"> Produkte</label><br>
+                    <label><input type="checkbox" id="exportLendings"> Ausleihen</label><br>
+                    <label><input type="checkbox" id="exportConsumption" checked> Verbrauchsmaterial</label><br>
+                    <label><input type="checkbox" id="exportSettings"> Einstellungen</label>
+                </div>
+            </div>
+            <button class="btn btn-success" onclick="exportData()">💾 Exportieren</button>
+        </div>
+    </div>
+
+    <!-- Import Modal -->
+    <div id="importModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>📂 Daten importieren</h3>
+                <span class="close" onclick="closeModal('importModal')">×</span>
+            </div>
+            <div class="form-group">
+                <label for="importFile">Import-Datei auswählen:</label>
+                <input type="file" id="importFile" class="form-control" accept=".json">
+            </div>
+            <div class="form-group">
+                <label>
+                    <input type="checkbox" id="overwriteData"> Daten überschreiben
+                </label>
+            </div>
+            <button class="btn btn-warning" onclick="importData()">📂 Importieren</button>
+        </div>
+    </div>
+
+    <!-- Add Storage Modal -->
+    <div id="addStorageModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>📍 Neuen Lagerplatz hinzufügen</h3>
+                <span class="close" onclick="closeModal('addStorageModal')">×</span>
+            </div>
+            <div class="form-group">
+                <label for="newStorageLocation">Lagerplatz:</label>
+                <input type="text" id="newStorageLocation" class="form-control" placeholder="z.B. Aug-04-07">
+            </div>
+            <button class="btn btn-success" onclick="addStorageLocation()">✅ Lagerplatz hinzufügen</button>
+        </div>
+    </div>
+
+    <!-- Batch Storage Modal -->
+    <div id="batchStorageModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>📚 Batch-Lagerplätze hinzufügen</h3>
+                <span class="close" onclick="closeModal('batchStorageModal')">×</span>
+            </div>
+            <div class="form-group">
+                <label for="batchStoragePrefix">Präfix (z.B. AUG):</label>
+                <input type="text" id="batchStoragePrefix" class="form-control" placeholder="z.B. AUG">
+            </div>
+            <div class="form-group">
+                <label for="batchStorageStart">Startnummer (z.B. 01, 01):</label>
+                <input type="text" id="batchStorageStart" class="form-control" placeholder="z.B. 01, 01">
+            </div>
+            <div class="form-group">
+                <label for="batchStorageEnd">Endnummer (z.B. 08, 08):</label>
+                <input type="text" id="batchStorageEnd" class="form-control" placeholder="z.B. 08, 08">
+            </div>
+            <button class="btn btn-success" onclick="addBatchStorageLocations()">✅ Batch hinzufügen</button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

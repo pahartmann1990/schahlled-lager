@@ -1,0 +1,34 @@
+[
+  {
+    "id": 1,
+    "barcode": "LED-Strahler 50W",
+    "name": "LED-Strahler 50W",
+    "description": "Außenbereich IP65",
+    "status": "available",
+    "storageLocation": "Aug-04-02"
+  },
+  {
+    "id": 2,
+    "barcode": "LED-Panel 60x60",
+    "name": "LED-Panel 60x60cm 40W",
+    "description": "Warmweiß 3000K",
+    "status": "available",
+    "storageLocation": "Aug-04-03"
+  },
+  {
+    "id": 3,
+    "barcode": "Einbauleuchte-12W",
+    "name": "Einbauleuchte rund 12W",
+    "description": "Dimmbar",
+    "status": "available",
+    "storageLocation": "Aug-04-04"
+  },
+  {
+    "id": 4,
+    "barcode": "Außenleuchte-LED",
+    "name": "Außenleuchte LED 30W",
+    "description": "Wandmontage IP66",
+    "status": "available",
+    "storageLocation": "Aug-04-02"
+  }
+]

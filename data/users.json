@@ -1,0 +1,29 @@
+[
+  {
+    "id": 1,
+    "name": "Max Mustermann",
+    "email": "max@schahlled.de",
+    "phone": "0123-456789",
+    "department": "Technik",
+    "defaultStorage": "Aug-04-02",
+    "type": "user"
+  },
+  {
+    "id": 2,
+    "name": "Anna Schmidt",
+    "email": "anna@schahlled.de",
+    "phone": "0123-456788",
+    "department": "Vertrieb",
+    "defaultStorage": "Aug-04-03",
+    "type": "user"
+  },
+  {
+    "id": 3,
+    "name": "Peter Glasl",
+    "email": "peter@schahlled.de",
+    "phone": "0123-456787",
+    "department": "Außendienst",
+    "defaultStorage": "Peter-Lager-01",
+    "type": "user"
+  }
+]

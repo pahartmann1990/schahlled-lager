@@ -1,0 +1,22 @@
+[
+  {
+    "id": 1,
+    "name": "Thorlux GmbH",
+    "customerNumber": "TH-001",
+    "contact": "Thomas Weber",
+    "email": "weber@thorlux.de",
+    "phone": "0456-789123",
+    "defaultStorage": "Kunden-TH-01",
+    "type": "customer"
+  },
+  {
+    "id": 2,
+    "name": "Elektro Müller",
+    "customerNumber": "EM-002",
+    "contact": "Hans Müller",
+    "email": "mueller@elektro.de",
+    "phone": "0789-123456",
+    "defaultStorage": "Kunden-EM-01",
+    "type": "customer"
+  }
+]
