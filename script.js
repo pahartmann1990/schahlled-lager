@@ -1,4 +1,4 @@
-// Der JS-Code bleibt größtenteils gleich, aber mit Erweiterungen für Login, Rechte, Logout-Zeit, Auto-Verknüpfung, Lager-Spezial, "versendet"-Button und Ausbuchen-Reiter.
+// Der JS-Code bleibt größtenteils gleich, aber mit Erweiterungen für Login, Rechte, Logout-Zeit, Auto-Verknüpfung, Lager-Spezial, "versendet"-Button und Ausbuchen-Reiter test.
 
 // Global Variables - Erweitert
 let currentUser = null;
