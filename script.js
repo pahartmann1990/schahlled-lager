@@ -2,7 +2,9 @@
 
 // Global Variables - Erweitert
 let currentUser = null;
+let currentEmployee = null; // Für Lager-Modus
 let autoLogoutTimer;
+let employeeResetTimer;
 let bookOuts = JSON.parse(localStorage.getItem('schahlled_bookouts')) || []; // Neu für Ausbuchen
 
 // Initialisiere mit Patrick als Admin in users.json (passe data/users.json an)
@@ -18,11 +20,15 @@ document.addEventListener('DOMContentLoaded', async function() {
     } else {
         currentUser = JSON.parse(sessionStorage.getItem('currentUser'));
         const users = JSON.parse(localStorage.getItem('schahlled_users'));
-        setupAutoLogout(users.find(u => u.username === currentUser.username).logoutTime);
+        const user = users.find(u => u.username === currentUser.username);
+        setupAutoLogout(user.logoutTime);
         if (currentUser.role === 'admin') {
             enableAdminFeatures();
+        } else if (currentUser.role === 'lager') {
+            // Lager-Modus: Kein Auto-Logout, manuelle Mitarbeiter-Auswahl
+            showLagerEmployeeModal();
         }
-        autoSelectUser(currentUser);
+        autoSelectUser(user);
     }
     // ... (rest gleich)
 });
@@ -30,20 +36,19 @@ document.addEventListener('DOMContentLoaded', async function() {
 // Login-Handling
 document.getElementById('loginForm').addEventListener('submit', function(e) {
     e.preventDefault();
-    const username = document.getElementById('username').value;
+    const username = document.getElementById('username').value.trim().toLowerCase();
     const password = document.getElementById('password').value;
     const users = JSON.parse(localStorage.getItem('schahlled_users'));
-    const user = users.find(u => u.username === username && u.password === password);
+    const user = users.find(u => u.username.toLowerCase() === username && u.password === password);
     if (user) {
-        currentUser = {username: username, role: user.role};
+        currentUser = {username: user.username, role: user.role};
         sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
         document.getElementById('loginModal').style.display = 'none';
         setupAutoLogout(user.logoutTime);
         if (user.role === 'admin') {
             enableAdminFeatures();
         } else if (user.role === 'lager') {
-            // Lager-Modus: Kein Auto-Logout, manuelle Mitarbeiter-Auswahl
-            promptEmployeeSelection();
+            showLagerEmployeeModal();
         }
         autoSelectUser(user);
         alert('Login erfolgreich!');
@@ -63,41 +68,84 @@ function setupAutoLogout(minutes) {
 
 function logout() {
     currentUser = null;
+    currentEmployee = null;
     sessionStorage.removeItem('currentUser');
     clearTimeout(autoLogoutTimer);
+    clearTimeout(employeeResetTimer);
     document.getElementById('loginModal').style.display = 'block'; // Zurück zum Login
     showPage('dashboard');
 }
 
 // Auto-Verknüpfung mit Mitarbeiter
 function autoSelectUser(user) {
-    // In Forms vorauswählen, außer für Lager
-    if (user.role !== 'lager') {
-        const userSelects = document.querySelectorAll('select[data-type="user"]'); // Tagg die Selects
+    // In Forms vorauswählen, außer für Lager (wo currentEmployee verwendet wird)
+    const linkedUser = (currentUser.role === 'lager' ? currentEmployee : user) || user;
+    if (linkedUser) {
+        const userSelects = document.querySelectorAll('select[data-type="user"]'); // Tagg die Selects entsprechend
         userSelects.forEach(select => {
-            select.value = user.username;
+            select.value = linkedUser.id; // oder username, passe an
         });
     }
 }
 
-// Lager-Spezial: Mitarbeiter-Auswahl prompten
-function promptEmployeeSelection() {
-    // Zeige Modal oder Select für Mitarbeiter-Auswahl im Lager-Modus
-    // Implementiere ein Modal ähnlich wie Login, um Mitarbeiter zu wählen
-    // Nach Auswahl: Verknüpfe, mit einstellbarer Reset-Zeit
-    // Manuelle Abmeldung nur für den Mitarbeiter
+// Lager-Spezial: Mitarbeiter-Auswahl-Modal
+function showLagerEmployeeModal() {
+    populateLagerEmployeeSelect();
+    document.getElementById('lagerEmployeeModal').style.display = 'block';
+}
+
+function populateLagerEmployeeSelect() {
+    const select = document.getElementById('lagerEmployeeSelect');
+    select.innerHTML = '<option value="">-- Mitarbeiter wählen --</option>';
+    const users = JSON.parse(localStorage.getItem('schahlled_users'));
+    users.filter(u => u.role !== 'lager').forEach(user => {
+        const option = document.createElement('option');
+        option.value = user.id;
+        option.textContent = user.name;
+        select.appendChild(option);
+    });
+}
+
+function selectLagerEmployee() {
+    const employeeId = document.getElementById('lagerEmployeeSelect').value;
+    if (employeeId) {
+        const users = JSON.parse(localStorage.getItem('schahlled_users'));
+        currentEmployee = users.find(u => u.id == employeeId);
+        document.getElementById('lagerEmployeeModal').style.display = 'none';
+        autoSelectUser(currentEmployee);
+        setupEmployeeResetTimer(currentEmployee.logoutTime); // Reset-Zeit für Mitarbeiter im Lager-Modus
+    } else {
+        alert('Bitte Mitarbeiter auswählen!');
+    }
+}
+
+function setupEmployeeResetTimer(minutes) {
+    if (minutes > 0) {
+        employeeResetTimer = setTimeout(() => {
+            currentEmployee = null;
+            showLagerEmployeeModal(); // Zurück zur Auswahl
+        }, minutes * 60 * 1000);
+    }
+}
+
+function logoutEmployee() {
+    currentEmployee = null;
+    clearTimeout(employeeResetTimer);
+    showLagerEmployeeModal();
 }
 
 // Admin-Features (erweitert)
 function enableAdminFeatures() {
-    // Zeige User-Settings
-    const settingsLink = document.createElement('a');
-    settingsLink.textContent = 'Benutzereinstellungen (Admin)';
-    settingsLink.onclick = () => {
+    // Zeige User-Settings in Nav
+    const settingsSection = document.querySelector('.nav-section:nth-child(3)'); // Einstellungen-Section
+    const adminBtn = document.createElement('button');
+    adminBtn.className = 'nav-btn';
+    adminBtn.textContent = 'Benutzereinstellungen (Admin)';
+    adminBtn.onclick = () => {
         populateUserList();
         document.getElementById('userSettingsModal').style.display = 'block';
     };
-    document.querySelector('.sidebar nav ul li:nth-child(3) ul').appendChild(settingsLink); // Passe an deine Nav an
+    settingsSection.appendChild(adminBtn);
 }
 
 // Population von User-List in Settings
@@ -105,12 +153,12 @@ function populateUserList() {
     const users = JSON.parse(localStorage.getItem('schahlled_users'));
     const select = document.getElementById('userList');
     select.innerHTML = '';
-    for (let user of users) {
+    users.forEach(user => {
         const option = document.createElement('option');
         option.value = user.username;
         option.textContent = user.name;
         select.appendChild(option);
-    }
+    });
 }
 
 // Save User Settings
@@ -213,6 +261,6 @@ function updateBookOutList() {
     container.innerHTML = html;
 }
 
-// In showPage('bookOutFlow'): updateBookOutList();
+// In showPage('bookOutFlow'): loadStorageLocations(); updateBookOutList();
 
 // ... (Rest des JS-Codes bleibt gleich)
