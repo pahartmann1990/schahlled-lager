@@ -46,12 +46,27 @@ async function loadInitialData() {
     }
 }
 
+// Befüllt das User-Dropdown im Header
+function populateHeaderUserSelect() {
+    const select = document.getElementById('headerUserSelect');
+    if (!select) return;
+    select.innerHTML = '<option value="">-- Benutzer wählen --</option>';
+    const users = JSON.parse(localStorage.getItem('schahlled_users')) || [];
+    users.forEach(user => {
+        const option = document.createElement('option');
+        option.value = user.id;
+        option.textContent = user.name;
+        select.appendChild(option);
+    });
+}
+
 // Initialisiere mit Patrick als Admin in users.json (passe data/users.json an)
 // Beispiel: {"id":0, "name":"Patrick", "username":"patrick", "password":"adminpass", "role":"admin", "logoutTime":0, ...}
 
 // In initializeApp() - Erweitert für Login
 document.addEventListener('DOMContentLoaded', async function() {
     await loadInitialData();
+    populateHeaderUserSelect();
     initializeApp();
     // Zeige Login bei Start
     if (!sessionStorage.getItem('currentUser')) {
@@ -66,6 +81,11 @@ document.addEventListener('DOMContentLoaded', async function() {
         } else if (currentUser.role === 'lager') {
             // Lager-Modus: Kein Auto-Logout, manuelle Mitarbeiter-Auswahl
             showLagerEmployeeModal();
+        }
+        if (currentUser.role !== 'lager') {
+            document.getElementById('headerUserSelect').value = user.id;
+        } else {
+            document.getElementById('headerUserSelect').value = '';
         }
         autoSelectUser(user);
     }
@@ -88,6 +108,11 @@ document.getElementById('loginForm').addEventListener('submit', function(e) {
             enableAdminFeatures();
         } else if (user.role === 'lager') {
             showLagerEmployeeModal();
+        }
+        if (user.role !== 'lager') {
+            document.getElementById('headerUserSelect').value = user.id;
+        } else {
+            document.getElementById('headerUserSelect').value = '';
         }
         autoSelectUser(user);
         alert('Login erfolgreich!');
@@ -125,6 +150,16 @@ function autoSelectUser(user) {
             select.value = linkedUser.id; // oder username, passe an
         });
     }
+}
+
+// Auswahl des Users im Header wurde geändert
+function changeLoggedInUser(id) {
+    const users = JSON.parse(localStorage.getItem('schahlled_users')) || [];
+    const user = users.find(u => u.id == id);
+    if (currentUser && currentUser.role === 'lager') {
+        currentEmployee = user || null;
+    }
+    autoSelectUser(user);
 }
 
 // Lager-Spezial: Mitarbeiter-Auswahl-Modal
