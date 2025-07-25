@@ -8,6 +8,44 @@ let autoLogoutTimer;
 let employeeResetTimer;
 let bookOuts = JSON.parse(localStorage.getItem('schahlled_bookouts')) || []; // Neu für Ausbuchen
 
+// Lädt Basisdaten (Benutzer, Produkte, Lagerplätze) in den localStorage
+async function loadInitialData() {
+    // Hilfsfunktion zum Laden und Parsen von JSON mit optionalen Kommentarzeilen
+    const fetchJson = async (path) => {
+        const response = await fetch(path);
+        const text = await response.text();
+        const cleaned = text.replace(/\/\/.*$/gm, '');
+        return JSON.parse(cleaned);
+    };
+
+    if (!localStorage.getItem('schahlled_users')) {
+        try {
+            const users = await fetchJson('data/users.json');
+            localStorage.setItem('schahlled_users', JSON.stringify(users));
+        } catch (err) {
+            console.error('Fehler beim Laden der Benutzer', err);
+        }
+    }
+
+    if (!localStorage.getItem('schahlled_products')) {
+        try {
+            const products = await fetchJson('data/products.json');
+            localStorage.setItem('schahlled_products', JSON.stringify(products));
+        } catch (err) {
+            console.error('Fehler beim Laden der Produkte', err);
+        }
+    }
+
+    if (!localStorage.getItem('schahlled_storage')) {
+        try {
+            const storage = await fetchJson('data/storage_locations.json');
+            localStorage.setItem('schahlled_storage', JSON.stringify(storage));
+        } catch (err) {
+            console.error('Fehler beim Laden der Lagerplätze', err);
+        }
+    }
+}
+
 // Initialisiere mit Patrick als Admin in users.json (passe data/users.json an)
 // Beispiel: {"id":0, "name":"Patrick", "username":"patrick", "password":"adminpass", "role":"admin", "logoutTime":0, ...}
 
