@@ -1,0 +1,17 @@
+{
+  "users": [
+    {
+      "name": "Test-User",
+      "code": "1234"
+    }
+  ],
+  "fixedActivities": [
+    {
+      "day": "2025-08-02",
+      "time": "10:00",
+      "duration": 120,
+      "name": "Schwimmen (Beispiel)"
+    }
+  ],
+  "proposals": []
+}
